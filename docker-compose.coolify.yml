@@ -1,0 +1,27 @@
+# docker-compose.coolify.yml — Phase 1 (pilote qdrant)
+# Test pipeline Coolify avant de migrer la stack complète `local-ai-packaged`.
+# Une fois validé → remplacer par le compose complet (Phase 3, ~18 services).
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-pilot
+    restart: unless-stopped
+    expose:
+      - "6333/tcp"
+      - "6334/tcp"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  qdrant_storage:
+    name: faktory-pilot_qdrant_storage
