@@ -6,8 +6,8 @@
 # Public via Traefik: n8n (n8n.recall-agency.com)
 # Internal only (expose): ollama-cpu, searxng, minio, all other supabase services
 #
-# ⚠️ Phase 2 PG/Redis one-click = BLOCKED. Either coolify-db/coolify-redis (server-level)
-#    OR self-contained db/redis services in this compose. Decision pending user validation.
+# n8n → coolify-db (PostgreSQL interne Coolify, hostname `coolify-db` sur réseau `coolify`)
+# Accès réseau : n8n est attaché au réseau externe `coolify` en plus de son réseau par défaut
 
 services:
 
@@ -353,10 +353,10 @@ services:
     restart: unless-stopped
     environment:
       DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: pg-managed
+      DB_POSTGRESDB_HOST: coolify-db
       DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: postgres
-      DB_POSTGRESDB_USER: postgres
+      DB_POSTGRESDB_DATABASE: coolify
+      DB_POSTGRESDB_USER: coolify
       DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
       N8N_HOST: ${N8N_HOSTNAME}
       N8N_PORT: 5678
@@ -369,6 +369,9 @@ services:
       TZ: Asia/Singapore
     volumes:
       - n8n_storage:/home/node/.n8n
+    networks:
+      - default
+      - coolify
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.n8n.rule=Host(`${N8N_HOSTNAME}`)"
@@ -510,3 +513,8 @@ volumes:
   neo4j_data:
   ollama_storage:
   minio_storage:
+
+networks:
+  coolify:
+    external: true
+    name: coolify
