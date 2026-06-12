@@ -7,9 +7,9 @@ services:
     image: qdrant/qdrant:latest
     container_name: qdrant-pilot
     restart: unless-stopped
-    expose:
-      - "6333/tcp"
-      - "6334/tcp"
+    ports:
+      - "6333:6333"
+      - "6334:6334"
     volumes:
       - qdrant_storage:/qdrant/storage
     deploy:
