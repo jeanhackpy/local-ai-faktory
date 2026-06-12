@@ -16,11 +16,6 @@ services:
       resources:
         limits:
           memory: 1g
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:6333/healthz"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
 volumes:
   qdrant_storage:
