@@ -353,7 +353,7 @@ services:
     restart: unless-stopped
     environment:
       DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: supabase-db
+      DB_POSTGRESDB_HOST: pg-managed
       DB_POSTGRESDB_PORT: 5432
       DB_POSTGRESDB_DATABASE: postgres
       DB_POSTGRESDB_USER: postgres
@@ -502,28 +502,6 @@ services:
         limits:
           memory: 256m
 
-  redis:
-    container_name: redis-shared
-    image: valkey/valkey:8-alpine
-    restart: unless-stopped
-    environment:
-      VALKEY_MAXMEMORY: 300mb
-      VALKEY_MAXMEMORY_POLICY: allkeys-lru
-    volumes:
-      - redis_storage:/data
-    expose:
-      - "6379/tcp"
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6379'"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 300m
-
 volumes:
   supabase_db-config:
   supabase_storage-data:
@@ -532,4 +510,3 @@ volumes:
   neo4j_data:
   ollama_storage:
   minio_storage:
-  redis_storage:

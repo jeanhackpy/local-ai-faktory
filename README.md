@@ -7,8 +7,8 @@
 | Phase | Contenu | Statut |
 |---|---|---|
 | **Phase 1** | Pilote qdrant (validation pipeline Coolify + Tailscale) | ✅ Validé 2026-06-12 |
-| **Phase 2** | Services one-click PG + Redis | 🚫 **BLOQUÉ** — `coolify-db` et `coolify-redis` sont INTERNE à Coolify, pas pour les ressources projet (per doc `/docs/get-started/internal-postgresql-upgrade`). Le compose Phase 3 est self-contained (n8n → supabase-db, redis in-compose). |
-| **Phase 3** | Compose complet 18 services (Supabase + IA) | 🚧 Stage local, push en attente OK |
+| **Phase 2** | Services one-click PG + Redis (`pg-managed`, `redis-managed`) | ✅ Repo à jour, à créer dans Coolify avant deploy |
+| **Phase 3** | Compose complet 18 services (Supabase + IA) | ✅ Repo à jour, prêt pour deploy |
 | **Phase 4** | Stratégie de backup DB (Coolify + MinIO) | ⏳ |
 | **Phase 5** | Switch définitif + durcissement OCI | ⏳ |
 
@@ -26,11 +26,13 @@
                 │  │    • localai-stack (Phase 3 — 18 svc)   │      │
                 │  └────────────────────────────────────────┘      │
                 │                                                  │
-                │  Self-contained (Phase 3 compose):               │
-                │    supabase-db (Postgres 15.8.1 spécialisé)      │
-                │    └─ sert aussi de DB à n8n                    │
-                │    redis (Valkey 8) ←─ cache n8n + SearXNG      │
+                │  One-click services Coolify (MANAGED):           │
+                │    pg-managed (PostgreSQL one-click)             │
+                │    └─ sert de DB à n8n                          │
+                │    redis-managed (Valkey one-click)              │
+                │    └─ pour cache n8n / queue mode (à venir)     │
                 │  Supabase-stack (11 services sur supabase-db):  │
+                │    supabase-db (Postgres 15.8.1 spécialisé)      │
                 │    studio, kong, auth, rest, realtime,           │
                 │    storage, imgproxy, meta, functions, supavisor │
                 │  IA & data (6):                                  │
@@ -88,11 +90,21 @@ Tout le reste est **Tailscale-only** (`100.68.166.111:PORT`) sauf ollama/searxng
 
 ## Sauvegardes (Phase 4)
 
-- **PostgreSQL** (compose 18, `supabase-db`) : `pg_dump` quotidien via `backups/cron-pgdump.sh` → MinIO
+- **PostgreSQL one-click** (`pg-managed`) : backup automatique Coolify natif (POST /databases/{uuid}/backups)
+- **Supabase DB** (in-compose) : `pg_dump` quotidien via `backups/cron-pgdump.sh` → MinIO
 - **n8n** : tarball quotidien → MinIO
 - **qdrant** : snapshot quotidien → MinIO
 - **neo4j** : `neo4j-admin dump` → MinIO
 - **Rétention** : 7j daily, 30j archivage
+
+## Déployer en local (étapes utilisateur)
+
+1. **Créer les services one-click dans Coolify** :
+   - `+ New → Service → PostgreSQL` → nom `pg-managed` → Deploy
+   - `+ New → Service → Redis` → nom `redis-managed` → Deploy
+   - Attendre `running:healthy` pour les 2
+2. **Pousser les variables d'env** sur l'app Coolify (voir `.env.coolify.example`)
+3. **Déployer** l'app `localai-stack` (compose 18 services)
 
 ## Fichiers du repo
 
@@ -108,4 +120,4 @@ Tout le reste est **Tailscale-only** (`100.68.166.111:PORT`) sauf ollama/searxng
 
 ## Plan détaillé
 
-Voir `/Users/phil/.claude_minimax/plans/ecoute-je-pense-que-composed-scroll.md` (plan complet validé 2026-06-12, **à corriger** : la section Phase 2 contient une erreur — supabase-db n'est PAS utilisé par n8n).
+Voir `/Users/phil/.claude_minimax/plans/ecoute-je-pense-que-composed-scroll.md` (plan complet validé 2026-06-12).
